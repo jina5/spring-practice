@@ -1,0 +1,12 @@
+package com.jina.project.board.model.vo;
+
+import java.util.Date;
+
+public class Board {
+	private int bNo;
+	private int title;
+	private Date crtDate;
+	private String ori;
+	private String ren;	
+	private String userId;
+}

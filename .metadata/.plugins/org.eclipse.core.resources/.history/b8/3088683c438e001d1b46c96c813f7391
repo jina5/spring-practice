@@ -1,0 +1,177 @@
+package com.jina.project.member.controller;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.SessionAttribute;
+
+import com.jina.project.member.model.service.MemberService;
+import com.jina.project.member.model.vo.Member;
+
+@RequestMapping("/member")
+@Controller
+public class MemberController {
+
+	@Autowired //컴포넌트 스캔할때 클래스 이름이랑 자동으로 매핑..
+	private MemberService ms;
+
+	@GetMapping("/login.do")
+	public String moveLogin() {
+		return "member/login"; //jsp
+	}
+	
+	@PostMapping("/login.do")
+	public String login(@RequestParam String id, @RequestParam String password, HttpSession session, Model model) {
+		Map<String, String> map = new HashMap<>();
+		map.put("id", id);
+		map.put("pwd", password);
+		Member loginMember = ms.login(map); //return : null or member객체
+		if (loginMember == null) {
+			model.addAttribute("msg", "login 실패");
+			model.addAttribute("location", "/");
+			return "common/msg"; // "/WEB-INF/views/"
+		}
+		session.setAttribute("loginMember", loginMember); //브라우저 끄기 전까지 정보 유지
+		model.addAttribute("msg", "login 성공");
+		model.addAttribute("location", "/");
+		return "common/msg";
+	}
+	
+	@GetMapping("/join.do")
+	public String movejoin() {
+		return "member/join";
+	}
+	
+	@PostMapping("/join.do")
+	public String join(@RequestParam Map<String, String> map, Model model) {
+		// map {key:value}}
+		Member m = new Member();
+		m.setId(map.get("id"));
+		m.setPassword(map.get("pwd"));
+		int result = ms.join(m);
+		if (result > 0) {
+			model.addAttribute("msg", "Join 성공");
+			model.addAttribute("location", "/");
+			return "common/msg";
+
+		} else {
+			model.addAttribute("msg", "Join 실패");
+			model.addAttribute("location", "/");
+			return "common/msg";
+		}
+	}
+	
+	@GetMapping("dupId") //http 통신 TCP IP : 클라이언트: 나 정보 달라고 할건데 지금 있니? -> 서버:ㅇㅇ -> 클라이언트 : 그럼 정보줘 -> 서버:ㅇㅇ보냄
+	public ResponseEntity<Boolean> dupId(@RequestParam String id){ 
+		boolean flag = true;
+		Member result = ms.findId(id);
+		if (result ==null) {
+			flag = false;
+		} 
+		//Rest API : 데이터를 서버에서 클라이언트로 보냄. data transfer
+		//SSR(server side rendering) -> data만 보내면 클라이언트는 기본 body를 json형식으로 준다.
+		return new ResponseEntity<Boolean>(flag, HttpStatus.OK); //{"flag":true,..}
+	}
+	
+	//get, post
+	//get : url에 파라미터를 넣어서 보냄 ex. https://naver.com?id=nna
+	//post : http request body에 집어 넣는것 
+	// ex. http request -> http/1.1(http version 정보)/ method 정보 /target(url 정보)
+	//header : ip / host / 어디서 어디로 보내나...
+	//body : data가 있을 때는 넣어서 보내고 없으면 없이 보냄 (json으로)
+	
+	
+	//HttpServletRequest req; -> http 요청 (method, parameter, url...)
+	//HttpServletResponse resp; -> http 응답 (html)
+	//model 안에 데이터를 넣으면 (addAttribute) request로 보내준다.
+	
+	
+	
+	//파라미터도 없고, 보내줄 데이터도 없어서 ... get...
+	@GetMapping("/logout.do")
+//        session.setAttribute("loginMember", null); // session 삭제 1
+        session.invalidate(); // session 삭제 2
+        model.addAttribute("msg","log out");
+        model.addAttribute("location", "/"); //model을 지역변수로 선언하고, return jsp 했으니까 ... 그 model에 담긴거를 가지고 request 요청
+       // request에 담긴 정보(model)은 response해주면 없어짐.
+        // response : msg.jsp에 있는거 렌더링..!
+        return "common/msg"; 
+        // jsp로 리턴해야한다.
+        // 서블릿 시절에는 
+        // @RequestParam HttpServletRequest req
+        // req.setAttribute(pwd,model)
+        // req.getRequestDispatcher("path").forward(req, resp)
+        // 이렇게 보내줬었음
+        // 지금은
+        // /WEB-INF/views/~~~~/login.jsp 로 보내야하는데,
+        // servlet-context 인터널리소스뷰리졸버 설정을 통해서 
+        // path를 String으로 보내주면
+        // 걔를 저 주소로 인식하도록 한다.
+        // 브라우저에서 request 하면  
+        // 디스패처 서블릿으로 들어가서, 요청 ( 주소, 파라미터) 을 받음. 
+        // 요청 주소를 핸들러매핑에서 확인한다.
+        // 확인 후 컨트롤러로 이동..
+        // String으로 리턴하면 
+        // 뷰 리졸버로 jsp 뷰를 찾아간다.
+        // jsp 뷰 컴파일해서 html으로 브라우저 렌더링
+        
+        // 1. 브라우저에서 로그아웃 요청을 함
+        // web.xml <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        // 2. dispatcher servlet 이 요청을 받음.
+        // 3. dispatcher가 handler mapping(@GetMapping(""))에서 요청을 매핑시킨다.
+        // 4. 다시 dispatcher가 controller로 요청을 보냄.
+        // servlet-context.xml 인터널리소스뷰리졸버 
+        // 5. controller return 뷰리졸버로 그 String을 jsp 주소로 인식해서 리턴. 
+        // 6. jsp를 컴파일 해서 html로 만들어서 dispatcher servlet이 받아서 response에 담아서 브라우저로 response 보내줌.
+
+    }
+	@GetMapping("update.do")
+	public String moveUpdate() {
+		return "member/update";
+	}
+	
+	@PostMapping("/update.do")
+	// jsp파일 jstl에서는 session 변수를 바로 사용할 수 있는데, 
+	// jsp에서도 jsp 1.0에서는 session에서 가져왔어야했는데 2.0에서 엔진에서 자동으로 매핑해주기 때문에 변수를 바로 사용할 수 있다.
+	
+	// 하지만 java에서는 session에서 변수를 가져와야 한다.
+	
+	// HttpSession session
+	// Member m = (Member)session.getAttribute("loginMember")
+	// 이렇게 할 수있고,
+	
+	// @SessionAttribute Member loginMember
+	// loginMember
+	// 이렇게 할 수 있다.
+	// java에서는 session 변수를 사용하기 위해서 sessionAttribute로 loginMember 이름의 정보를 가져온다. 
+	public String updateMember(Model model, @RequestParam String password, @SessionAttribute Member loginMember) { //jsp 의 name="password"
+		if (loginMember==null) {
+			model.addAttribute("msg","잘못된 요청입니다.");
+			model.addAttribute("location","/");
+			return "common/msg";
+		}
+		
+		loginMember.setPassword(password);
+		boolean result = ms.modifyMember(loginMember);
+		if (result) {
+			
+		}
+		return "member/update";
+	}
+	
+	
+	
+
+	
+}

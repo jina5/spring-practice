@@ -1,0 +1,5 @@
+package com.jina.project.board.model.vo;
+
+public class Board {
+
+}

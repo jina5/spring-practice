@@ -1,0 +1,59 @@
+<jsp:include page="/WEB-INF/views/common/header.jsp"/>
+<jsp:include page="/WEB-INF/views/common/footer.jsp"/>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<c:set var="path" value="${pageContext.request.contextPath}" />
+<style>
+    label {
+        font-size: 20px;
+        margin-right: 10px;
+    }
+    input{
+        font-size:20px;
+    }
+    table{
+        border:1px solid black;
+        padding: 10px;
+        margin:auto
+    }
+    input[type=submit]{
+        margin:auto;
+    }
+</style>
+<script>
+    function dupId(this){
+        $.ajax({
+            type:'get',
+            url:'${path}/member/dupId',
+            dataType:'json',
+            success:(data)=>{
+                let str = $('#id').val();
+                if (data==str){
+                    alert('중복된 id입니다.')
+                } else{
+                    alert('중복된 id가 없어요.')
+                }
+            },
+            error:(e)=>{
+                console.log(e)
+            }
+        })
+    }
+</script>
+ <form action="${path}/member/login.do" method="post">
+        <table>
+            <tr>
+                <td><label for="id">ID</label></td>
+                <td><input type="text" name="id" id="id"></td>
+                <td><button onclick="dupId">중복 검사</button></td>
+            </tr>
+            <tr>
+                <td><label for="pwd">Password</label></td>
+                <td><input type="password" name="pwd" id="pwd"></td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align:right"><input type="submit" value="Join" style="font-size: 20px;"></td>
+            </tr>
+        </table>
+    </form>

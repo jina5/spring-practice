@@ -1,0 +1,24 @@
+package com.jina.project.board.model.dao;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.session.SqlSession;
+
+import com.jina.project.board.model.vo.Board;
+import com.jina.project.common.util.PageInfo;
+
+public interface boardDAO {
+	//기능
+	
+	//1. 목록조회
+	public int selectBoardCnt(sqlSession session, Map<String,String> map);
+	public List<Board> selectBoard(SqlSession session, PageInfo pageinfo);
+	//sqlSession : dbms랑 연결
+	//httpSession : 브라우저에 저장된 세션 토큰
+	public List<Board> selectBoard(SqlSession session, PageInfo pageinfo, Map<String, String> map);
+	
+	public Board selectBoardDetail(SqlSession session, int bNo);
+	
+	
+}

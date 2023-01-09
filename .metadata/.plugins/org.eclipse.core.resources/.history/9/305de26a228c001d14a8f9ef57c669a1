@@ -1,0 +1,85 @@
+package com.jina.project.member.controller;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpSession;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.jina.project.member.model.service.MemberService;
+import com.jina.project.member.model.vo.Member;
+
+@RequestMapping("/member")
+@Controller
+public class MemberController {
+
+	@Autowired //컴포넌트 스캔할때 클래스 이름이랑 자동으로 매핑..
+	private MemberService ms;
+
+	@GetMapping("/login.do")
+	public String moveLogin() {
+		return "member/login"; //jsp
+	}
+	
+	@PostMapping("/login.do")
+	public String login(@RequestParam String id, @RequestParam String password, HttpSession session, Model model) {
+		Map<String, String> map = new HashMap<>();
+		map.put("id", id);
+		map.put("pwd", password);
+		Member loginMember = ms.login(map); //return : null or member객체
+		if (loginMember == null) {
+			model.addAttribute("msg", "login 실패");
+			model.addAttribute("location", "/");
+			return "common/msg"; // "/WEB-INF/views/"
+		}
+		session.setAttribute("loginMember", loginMember); //브라우저 끄기 전까지 정보 유지
+		model.addAttribute("msg", "login 성공");
+		model.addAttribute("location", "/");
+		return "common/msg";
+	}
+	
+	@GetMapping("/join.do")
+	public String movejoin() {
+		return "member/join";
+	}
+	
+	@PostMapping("/join.do")
+	public String join(@RequestParam Map<String, String> map, Model model) {
+		// map {key:value}}
+		Member m = new Member();
+		m.setId(map.get("id"));
+		m.setPassword(map.get("pwd"));
+		int result = ms.join(m);
+		if (result > 0) {
+			model.addAttribute("msg", "Join 성공");
+			model.addAttribute("location", "/");
+			return "common/msg";
+
+		} else {
+			model.addAttribute("msg", "Join 실패");
+			model.addAttribute("location", "/");
+			return "common/msg";
+		}
+	}
+	
+	@GetMapping("dupId") //http 통신 TCP IP : 클라이언트: 나 정보 달라고 할건데 지금 있니? -> 서버:ㅇㅇ -> 클라이언트 : 그럼 정보줘 -> 서버:ㅇㅇ보냄
+	public ResponseEntity<Boolean> dupId(@RequestParam String id){ 
+		boolean flag = true;
+		Member result = ms.findId(id);
+		if (result ==null) {
+			flag = false;
+		} 
+		//Rest API : 데이터를 서버에서 클라이언트로 보냄. data transfer
+		//SSR(server side rendering) -> data만 보내면 클라이언트는 기본 body를 json형식으로 준다.
+		return new ResponseEntity<Boolean>(flag, HttpStatus.OK); //{"flag":true,..}
+	}
+}

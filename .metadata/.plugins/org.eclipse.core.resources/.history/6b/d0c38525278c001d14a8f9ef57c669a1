@@ -1,0 +1,65 @@
+package com.jina.project.member.model.service;
+
+import java.util.Map;
+
+import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.jina.project.member.model.dao.MemberDAO;
+import com.jina.project.member.model.vo.Member;
+
+@Service
+public class MemberServiceImpl implements MemberService {
+
+	@Autowired
+	private MemberDAO dao; 
+
+	@Autowired //메모리상의 객체를 가져와서 사용할 수 있도록....
+	private SqlSessionTemplate session; //먼솔..?
+
+	@Autowired
+	private BCryptPasswordEncoder encoder;
+
+	@Override
+	public Member login(Map<String, String> map) {
+		Member member = dao.selectById(session, map.get("id"));
+		
+		if (member == null) {
+			return null;
+		}
+		String inputPwd = map.get("pwd"); 
+		String pwd = member.getPassword();
+
+		boolean match = encoder.matches(inputPwd, pwd);
+		if (match == false) {
+			return null;
+		}
+		return member; // membercontroller
+	}
+
+	@Transactional(rollbackFor = Exception.class) 
+	@Override
+	public int join(Member member) {
+		member.setPassword(encoder.encode(member.getPassword())); 
+		int result = dao.insertMember(session, member);
+		return result; // 1 성공...
+	}
+
+	@Override
+	public Member findId(String id) {
+		return dao.selectById(session, id);
+	}
+
+	@Override
+	public Member modifyMember(String password) {
+		int result = dao.updateMember(session, password);
+		if (result > 0 ) {
+			return true;
+		}
+		return false;
+	}
+
+}

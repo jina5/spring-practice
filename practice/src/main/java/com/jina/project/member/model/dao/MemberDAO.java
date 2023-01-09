@@ -1,0 +1,14 @@
+package com.jina.project.member.model.dao;
+
+import org.apache.ibatis.session.SqlSession;
+import org.mybatis.spring.SqlSessionTemplate;
+
+import com.jina.project.member.model.vo.Member;
+
+public interface MemberDAO {
+	public Member selectById(SqlSession session, String id);
+	public int insertMember(SqlSession session, Member member);
+	public int updateMember(SqlSessionTemplate session, Member member);
+	
+	
+}

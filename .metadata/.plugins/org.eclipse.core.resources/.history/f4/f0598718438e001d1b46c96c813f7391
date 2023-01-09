@@ -1,0 +1,12 @@
+package com.jina.project.board.model.vo;
+
+import java.util.Date;
+
+public class Reply {
+	private int rNo;
+	private int bNo;
+	private String content;
+	private Date crtDate;
+	private String userId;
+	
+}

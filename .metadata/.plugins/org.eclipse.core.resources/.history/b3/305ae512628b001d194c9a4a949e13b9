@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <!-- mapper:sql 담아두는 곳 -->
+ <mapper namespace="memberMapper">
+ 
+ <resultMap type="Member" id="memberResultMap"> <!-- type : 참조형 Member -->
+ <result property="idno" column="idno"/> <!-- property : 변수, column : db 테이블 컬럼 -->
+ <result property="id" column="id"/>
+ <result property="password" column="pwd"/>
+ </resultMap>
+ 
+ <select id="selectById" parameterType="string" resultMap="memberResultMap">
+ select * from board.member where id = #{id}
+ </select>
+ <select id="selectLast" resultType="int">
+ select idno from board.member order by 1 asc limit 1
+ </select>
+ <select id="insertMember" parameterType="Member">
+ insert into board.member values (#{idno},#{id},#{password},default)
+ </select>
+ </mapper>

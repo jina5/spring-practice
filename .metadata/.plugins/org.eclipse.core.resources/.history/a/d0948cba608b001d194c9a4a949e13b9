@@ -1,0 +1,59 @@
+package com.jina.project.member.model.service;
+
+import java.util.Map;
+
+import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.jina.project.member.model.dao.MemberDAO;
+import com.jina.project.member.model.vo.Member;
+
+@Service
+public class MemberServiceImpl implements MemberService {
+
+	@Autowired
+	private MemberDAO dao; // 데이터 받아오기
+
+	@Autowired
+	private SqlSessionTemplate session; // root-context에서 만듦 : db에서 데이터 오고가는 통로 -> dao로 보내줌.
+
+	@Autowired
+	private BCryptPasswordEncoder encoder; // 비밀번호 암호화
+	// db에서 데이터 받아옴 member : idno, id, pwd
+	// 비밀번호 확인 필요
+	// pwd 암호화 : db에 저장되는 비밀번호는 모두 암호화가 되어있기 떄문
+
+	@Override
+	public Member login(Map<String, String> map) {
+		Member member = dao.selectById(session, map.get("id"));
+		
+		if (member == null) {
+			return null;
+		}
+		String inputPwd = map.get("pwd"); // 암호화x
+		String pwd = member.getPassword(); // 암호화o
+
+		boolean match = encoder.matches(inputPwd, pwd); // 암호화되어있는 애랑 안되어있는 애랑 비교!
+		if (match == false) {
+			return null;
+		}
+		return member; // membercontroller
+	}
+
+	@Transactional(rollbackFor = Exception.class) //트랜잭션으로 처리, 값이 잘못되어 에러가 발생하면 롤백이 자동으로 되게.. 성공하면 commit
+	@Override
+	public int join(Member member) {
+		member.setPassword(encoder.encode(member.getPassword())); // 암호화해서 저장하기
+		int result = dao.insertMember(session, member);
+		return result;
+	}
+
+	@Override
+	public Member findId(String id) {
+		return dao.selectById(session, id);
+	}
+
+}
